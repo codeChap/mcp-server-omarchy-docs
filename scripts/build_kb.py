@@ -13,6 +13,7 @@ import json
 import re
 import sqlite3
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -296,6 +297,7 @@ def main():
     con.executemany("INSERT OR REPLACE INTO meta VALUES (?,?)", [
         ("latest_release", meta_version),
         ("built_from_commit", _repo_head()),
+        ("built_at", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
     ])
 
     # Vocabulary table for "did you mean" suggestions on zero-result queries.

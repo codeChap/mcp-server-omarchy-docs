@@ -383,7 +383,60 @@ class KnowledgeBase:
                             "by keyword; call without breaking_only to see all."}
         return {"from": f, "to": t, "count": len(releases), "releases": releases}
 
-    # ----------------------------------------------------------------- configs
+    # ----------------------------------------------------------------- updates
+
+    RELEASES_API = "https://api.github.com/repos/basecamp/omarchy/releases?per_page=5"
+
+    def check_updates(self) -> dict:
+        """Compare the KB snapshot against upstream. Network call on invoke."""
+        import urllib.request
+
+        m = self.meta()
+        local_latest = (m.get("latest_release") or "").lstrip("v")
+        try:
+            req = urllib.request.Request(
+                self.RELEASES_API,
+                headers={"Accept": "application/vnd.github+json",
+                         "User-Agent": "mcp-server-omarchy"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                releases = json.loads(resp.read().decode("utf-8"))
+        except Exception as e:  # noqa: BLE001 — network failures are expected
+            return {"error": f"Could not reach GitHub API: {e}",
+                    "local": self._snapshot_info(),
+                    "manual_check": "https://github.com/basecamp/omarchy/releases"}
+
+        upstream = [r["tag_name"].lstrip("v") for r in releases
+                    if r.get("tag_name")]
+        newest = upstream[0] if upstream else None
+        info = self._snapshot_info()
+        if newest and newest != local_latest:
+            key = lambda v: [int(x) for x in v.split(".") if x.isdigit()]  # noqa: E731
+            outdated = bool(newest and local_latest and key(newest) > key(local_latest))
+            info.update({
+                "upstream_newest_release": newest,
+                "status": ("OUTDATED — refresh now" if outdated
+                           else "KB is ahead of tagged releases (unreleased commits indexed)"),
+                "refresh": "scripts/fetch_sources.sh && python3 scripts/build_kb.py",
+                "recent_upstream_releases": upstream[:5],
+            })
+        else:
+            info.update({
+                "upstream_newest_release": newest,
+                "status": "UP TO DATE",
+            })
+        return info
+
+    def _snapshot_info(self) -> dict:
+        m = self.meta()
+        return {
+            "local_snapshot": {
+                "latest_release": m.get("latest_release"),
+                "built_from_commit": m.get("built_from_commit"),
+                "built_at": m.get("built_at", "unknown (rebuild to stamp)"),
+                "chunks": sum(self.counts().values()),
+            },
+        }
+
 
     def find_config(self, app: str):
         like = f"%{app}%"
@@ -511,6 +564,15 @@ TOOLS = [
         },
     },
     {
+        "name": "omarchy_check_updates",
+        "description": (
+            "Check whether this KB snapshot is behind upstream Omarchy (one GitHub "
+            "API call, only when invoked). Returns OUTDATED + the refresh command "
+            "when a newer release exists. Call before debugging version-sensitive "
+            "behavior or when answers seem to miss recent features."),
+        "inputSchema": {"type": "object", "properties": {}},
+    },
+    {
         "name": "omarchy_kb_info",
         "description": "Knowledge base stats: sources, chunk counts, pinned versions.",
         "inputSchema": {"type": "object", "properties": {}},
@@ -567,17 +629,22 @@ def handle_call(kb: KnowledgeBase, name: str, args: dict):
     if name == "omarchy_diff_releases":
         return kb.diff_releases(args["from_version"], args["to_version"],
                                 breaking_only=bool(args.get("breaking_only")))
+    if name == "omarchy_check_updates":
+        return kb.check_updates()
     if name == "omarchy_kb_info":
         m = kb.meta()
-        return {
+        info = {
             "server": SERVER_NAME, "version": SERVER_VERSION,
             "chunks": kb.counts(), "latest_release": m.get("latest_release"),
             "built_from_commit": m.get("built_from_commit"),
+            "built_at": m.get("built_at", "unknown"),
             "snapshot_note": (
-                "Point-in-time snapshot. If the user's Omarchy is newer than "
-                "latest_release, refresh: scripts/fetch_sources.sh && python3 scripts/build_kb.py"),
+                "Point-in-time snapshot. Run omarchy_check_updates (network) to "
+                "compare against upstream, or just refresh: "
+                "scripts/fetch_sources.sh && python3 scripts/build_kb.py"),
             "corpus": "omarchy.org Quattro manual + basecamp/omarchy repo docs, defaults, releases & git history",
         }
+        return info
     raise ValueError(f"Unknown tool {name}")
 
 

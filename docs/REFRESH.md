@@ -1,18 +1,23 @@
 # Refreshing the knowledge base
 
-The server is a **point-in-time snapshot**. It never touches the network at
-query time — that's a feature. Freshness is visible via `omarchy_kb_info`
-(`latest_release`, `built_from_commit`).
+The server is a **point-in-time snapshot**. At query time it never touches the
+network; the one exception is `omarchy_check_updates`, which makes a single
+GitHub API call when you invoke it and returns `UP TO DATE` or `OUTDATED`
+plus the refresh command.
 
-## Rebuild
+## Three ways to stay current
 
-```bash
-scripts/fetch_sources.sh      # git pull basecamp/omarchy + releases API
-python3 scripts/build_kb.py   # rebuild data/kb.sqlite3 (~6200 chunks)
-```
+1. **Check**: call `omarchy_check_updates` (or read `built_at` /
+   `latest_release` from `omarchy_kb_info`).
+2. **Rebuild locally** (always current, needs git + network once):
+   ```bash
+   scripts/fetch_sources.sh && python3 scripts/build_kb.py
+   ```
+3. **Download a prebuilt snapshot**: this repo runs a weekly GitHub Action
+   (Mondays) that rebuilds, smoke-tests, and attaches `kb.sqlite3` to the
+   [`kb` release](https://github.com/codeChap/mcp-server-omarchy/releases/tag/kb).
+   Drop it into `data/` next to the server — no fetch/build needed.
 
-Takes under a minute; the server can stay running (it opens the DB read-only
-per connection; restart it after a rebuild to be safe).
 
 ## What "current" means
 

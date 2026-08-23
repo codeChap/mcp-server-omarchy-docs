@@ -76,8 +76,9 @@ def main():
     resp = send(proc, {"jsonrpc": "2.0", "id": next(counter), "method": "tools/list"})
     tools = {t["name"] for t in resp["result"]["tools"]}
     expected = {"omarchy_search_docs", "omarchy_get_page", "omarchy_whats_new",
-                "omarchy_find_config", "omarchy_diff_releases", "omarchy_kb_info"}
-    check("tools/list has all 6 tools", tools == expected, str(tools ^ expected))
+                "omarchy_find_config", "omarchy_diff_releases", "omarchy_check_updates",
+                "omarchy_kb_info"}
+    check("tools/list has all 7 tools", tools == expected, str(tools ^ expected))
 
     r = call_tool(proc, "omarchy_search_docs", {"query": "how do I switch themes?"})
     check("search finds theme docs",

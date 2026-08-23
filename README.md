@@ -56,7 +56,8 @@ python3 scripts/test_mcp.py   # end-to-end protocol smoke test
 | `omarchy_whats_new` | Latest release (no args), a specific version, or everything since a date. |
 | `omarchy_diff_releases` | "I broke my system with an update" — what changed between two versions; `breaking_only=true`. |
 | `omarchy_find_config` | Where a setting/default/keybind lives. |
-| `omarchy_kb_info` | Check snapshot freshness **before** trusting version-sensitive answers. |
+| `omarchy_check_updates` | Is the KB behind upstream? One GitHub API call, only when invoked. |
+| `omarchy_kb_info` | Snapshot age/commit/chunks — freshness at a glance, offline. |
 
 Querying tips (lexical search, exact vocabulary matters):
 [docs/QUERYING.md](docs/QUERYING.md).
@@ -69,4 +70,6 @@ Where humans get help: [docs/GETTING_HELP.md](docs/GETTING_HELP.md).
 scripts/fetch_sources.sh && python3 scripts/build_kb.py
 ```
 
+Or grab the prebuilt weekly snapshot from the
+[`kb` release](https://github.com/codeChap/mcp-server-omarchy/releases/tag/kb).
 See [docs/REFRESH.md](docs/REFRESH.md) for snapshot semantics.

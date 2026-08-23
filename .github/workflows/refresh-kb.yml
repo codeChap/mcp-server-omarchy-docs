@@ -1,0 +1,49 @@
+name: Refresh knowledge base
+
+# Weekly snapshot of the Omarchy KB, attached to an auto-updating release.
+# Users can download kb.sqlite3 directly instead of running the pipeline.
+
+on:
+  schedule:
+    - cron: "23 4 * * 1" # Mondays 04:23 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch sources
+        run: ./scripts/fetch_sources.sh
+
+      - name: Build KB
+        run: python3 scripts/build_kb.py
+
+      - name: Smoke test
+        run: python3 scripts/test_mcp.py
+
+      - name: Stamp snapshot info
+        id: meta
+        run: |
+          LATEST=$(python3 -c "
+          import json,urllib.request
+          req=urllib.request.Request('https://api.github.com/repos/basecamp/omarchy/releases?per_page=1',headers={'User-Agent':'mcp-server-omarchy'})
+          print(json.load(urllib.request.urlopen(req))[0]['tag_name'])")
+          echo "tag=$LATEST" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to 'kb' release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: kb
+          name: "Knowledge base snapshots"
+          body: |
+            Prebuilt `data/kb.sqlite3` snapshots. Download and drop into `data/`
+            next to the server — no fetch/build needed.
+
+            Snapshot: ${{ steps.meta.outputs.tag }}, built ${{ github.event_name == 'schedule' && 'weekly (scheduled)' || 'on demand' }} from the pinned upstream commit.
+          files: data/kb.sqlite3
+          make_latest: false

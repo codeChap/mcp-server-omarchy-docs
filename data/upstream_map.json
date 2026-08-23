@@ -1,0 +1,16 @@
+{
+  "hyprland lua config": "https://wiki.hypr.land/Configuring/",
+  "hyprland keybind": "https://wiki.hypr.land/Configuring/Binds/",
+  "hyprland monitor": "https://wiki.hypr.land/Configuring/Monitors/",
+  "hyprland window rule": "https://wiki.hypr.land/Configuring/Window-Rules/",
+  "quickshell": "https://quickshell.org/docs/",
+  "quickshell qml": "https://quickshell.org/docs/types/",
+  "arch pacman": "https://wiki.archlinux.org/title/Pacman",
+  "arch wiki": "https://wiki.archlinux.org/",
+  "mkinitcpio": "https://wiki.archlinux.org/title/Mkinitcpio",
+  "limine": "https://github.com/limine-bootloader/limine",
+  "networkmanager": "https://wiki.archlinux.org/title/NetworkManager",
+  "wireplumber": "https://wiki.archlinux.org/title/WirePlumber",
+  "luks encryption": "https://wiki.archlinux.org/title/Dm-crypt/Encrypting_an_entire_system",
+  "power management": "https://wiki.archlinux.org/title/Power_management"
+}

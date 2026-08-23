@@ -1,0 +1,6 @@
+# Generated artifacts (rebuild via scripts/fetch_sources.sh && scripts/build_kb.py)
+data/raw/
+data/kb.sqlite3
+reference-zeus/
+__pycache__/
+*.pyc

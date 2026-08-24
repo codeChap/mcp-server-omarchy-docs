@@ -17,22 +17,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server-rs
+
+      - name: Build binaries
+        working-directory: server-rs
+        run: cargo build --release
+
       - name: Fetch sources
         run: ./scripts/fetch_sources.sh
 
       - name: Build KB
-        run: python3 scripts/build_kb.py
+        run: server-rs/target/release/build-kb "$PWD"
 
-      - name: Smoke test
-        run: python3 scripts/test_mcp.py
+      - name: Test
+        working-directory: server-rs
+        run: cargo test --release
 
       - name: Stamp snapshot info
         id: meta
         run: |
-          LATEST=$(python3 -c "
-          import json,urllib.request
-          req=urllib.request.Request('https://api.github.com/repos/basecamp/omarchy/releases?per_page=1',headers={'User-Agent':'mcp-server-omarchy'})
-          print(json.load(urllib.request.urlopen(req))[0]['tag_name'])")
+          LATEST=$(curl -fsSL -H 'User-Agent: mcp-server-omarchy' \
+            'https://api.github.com/repos/basecamp/omarchy/releases?per_page=1' | jq -r '.[0].tag_name')
           echo "tag=$LATEST" >> "$GITHUB_OUTPUT"
 
       - name: Publish to 'kb' release

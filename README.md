@@ -1,13 +1,8 @@
 # mcp-server-omarchy
 
 Offline documentation MCP server for **Omarchy v4.0.0 "Quattro"**.
-Zero dependencies — Python 3.10+ stdlib, SQLite FTS5, JSON-RPC over stdio.
-No Docker, no ChromaDB, no embeddings, no network at query time.
-
-A native Rust port lives in [`server-rs/`](server-rs/) — same corpus, same
-tools, byte-identical tool payloads (verified by
-`scripts/diff_test_rs_vs_py.py`), ~5 MB static binary, no Python runtime
-required.
+100% Rust: one static binary (bundled SQLite with FTS5, JSON-RPC over stdio).
+No Docker, no ChromaDB, no embeddings, no network at query time — no Python.
 
 Native alternative to [Zeus-Deus/omarchy-mcp](https://github.com/Zeus-Deus/omarchy-mcp)
 (Docker + ChromaDB + sentence-transformers): same corpus idea, none of the
@@ -34,35 +29,13 @@ releases and commits, regardless of raw text score. Trust model:
 ## Setup
 
 ```bash
-scripts/fetch_sources.sh      # clone basecamp/omarchy + fetch release notes
-python3 scripts/build_kb.py   # build data/kb.sqlite3 (~6200 chunks)
-python3 scripts/test_mcp.py   # end-to-end protocol smoke test (Python server)
-python3 scripts/test_mcp_rs.py        # same smoke test against the Rust binary
-python3 scripts/diff_test_rs_vs_py.py # replay calls on both servers, diff payloads
+scripts/fetch_sources.sh                    # clone basecamp/omarchy + fetch release notes
+cd server-rs && cargo build --release       # build both binaries (~5 MB, static SQLite)
+./target/release/build-kb                   # build ../data/kb.sqlite3 (~6200 chunks)
+cargo test                                  # unit + end-to-end protocol tests
 ```
 
 ## MCP client registration
-
-Python (reference implementation):
-
-```json
-{
-  "mcpServers": {
-    "omarchy-docs": {
-      "command": "python3",
-      "args": ["/absolute/path/to/mcp-server-omarchy/server/mcp_server.py"]
-    }
-  }
-}
-```
-
-Rust (native binary, ~7x faster startup):
-
-```bash
-cd server-rs && cargo build --release
-# Binary resolves data/kb.sqlite3 relative to its parent directory,
-# or set OMARCHY_KB_ROOT=/path/to/mcp-server-omarchy
-```
 
 ```json
 {
@@ -73,6 +46,9 @@ cd server-rs && cargo build --release
   }
 }
 ```
+
+The binary resolves `data/kb.sqlite3` relative to its parent directory, or set
+`OMARCHY_KB_ROOT=/path/to/mcp-server-omarchy` (or pass `--kb <root>`).
 
 ## Tools
 
@@ -94,7 +70,7 @@ Where humans get help: [docs/GETTING_HELP.md](docs/GETTING_HELP.md).
 ## Updating after a new Omarchy release
 
 ```bash
-scripts/fetch_sources.sh && python3 scripts/build_kb.py
+scripts/fetch_sources.sh && (cd server-rs && cargo build --release && ./target/release/build-kb)
 ```
 
 Or grab the prebuilt weekly snapshot from the

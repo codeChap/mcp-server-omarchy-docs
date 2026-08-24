@@ -778,7 +778,7 @@ impl KnowledgeBase {
                         obj.insert("status".into(), Value::String(status));
                         obj.insert(
                             "refresh".into(),
-                            json!("scripts/fetch_sources.sh && python3 scripts/build_kb.py"),
+                            json!("scripts/fetch_sources.sh && (cd server-rs && cargo build --release && ./target/release/build-kb)"),
                         );
                         obj.insert(
                             "recent_upstream_releases".into(),
@@ -895,7 +895,7 @@ impl KnowledgeBase {
             "latest_release": m.get("latest_release").cloned().map(Value::String).unwrap_or(Value::Null),
             "built_from_commit": m.get("built_from_commit").cloned().map(Value::String).unwrap_or(Value::Null),
             "built_at": m.get("built_at").cloned().unwrap_or_else(|| "unknown".into()),
-            "snapshot_note": "Point-in-time snapshot. Run omarchy_check_updates (network) to compare against upstream, or just refresh: scripts/fetch_sources.sh && python3 scripts/build_kb.py",
+            "snapshot_note": "Point-in-time snapshot. Run omarchy_check_updates (network) to compare against upstream, or just refresh: scripts/fetch_sources.sh && (cd server-rs && cargo build --release && ./target/release/build-kb)",
             "corpus": "omarchy.org Quattro manual + basecamp/omarchy repo docs, defaults, releases & git history",
         })
     }

@@ -11,7 +11,7 @@ plus the refresh command.
    `latest_release` from `omarchy_kb_info`).
 2. **Rebuild locally** (always current, needs git + network once):
    ```bash
-   scripts/fetch_sources.sh && python3 scripts/build_kb.py
+   scripts/fetch_sources.sh && (cd server-rs && cargo build --release && ./target/release/build-kb)
    ```
 3. **Download a prebuilt snapshot**: this repo runs a weekly GitHub Action
    (Mondays) that rebuilds, smoke-tests, and attaches `kb.sqlite3` to the

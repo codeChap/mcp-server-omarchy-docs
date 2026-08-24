@@ -1,30 +1,39 @@
 # mcp-server-omarchy (Rust)
 
-Native Rust port of [`../server/mcp_server.py`](../server/mcp_server.py) —
-the same offline Omarchy documentation MCP server: newline-delimited JSON-RPC
-over stdio, backed by the same read-only SQLite FTS5 knowledge base
-(`../data/kb.sqlite3`).
+The whole project is Rust: two binaries built from this crate.
+
+- **`mcp-server-omarchy`** — offline Omarchy documentation MCP server:
+  newline-delimited JSON-RPC over stdio, backed by a read-only SQLite FTS5
+  knowledge base (`../data/kb.sqlite3`).
+- **`build-kb`** — builds that knowledge base from raw sources fetched by
+  `../scripts/fetch_sources.sh`.
 
 Same 7 tools (`omarchy_search_docs`, `omarchy_get_page`, `omarchy_whats_new`,
 `omarchy_find_config`, `omarchy_diff_releases`, `omarchy_check_updates`,
 `omarchy_kb_info`), same tiering (manual > repo docs > configs > releases >
-commits), same payloads. Tool responses are byte-for-byte identical to the
-Python server — verified by `../scripts/diff_test_rs_vs_py.py`.
+commits). SQLite (with FTS5) compiles into the binary via rusqlite's bundled
+feature; there is no runtime dependency on Python, a system libsqlite3, or
+OpenSSL.
 
-## Build
+## Build & test
 
 ```bash
-cargo build --release
-# → target/release/mcp-server-omarchy (~5 MB)
+cargo build --release        # → target/release/{mcp-server-omarchy,build-kb}
+cargo test                   # builder unit tests + end-to-end protocol tests
 ```
 
-Dependencies (bundled SQLite with FTS5, serde_json, ureq+rustls) compile into
-the binary; there is no runtime dependency on a system libsqlite3, Python, or
-OpenSSL.
+## Rebuild the knowledge base
+
+```bash
+../scripts/fetch_sources.sh  # once: clone basecamp/omarchy + fetch releases
+./target/release/build-kb    # rebuild ../data/kb.sqlite3 (~6200 chunks, <1s)
+```
+
+Pass an optional root directory argument to build into a different checkout.
 
 ## Run
 
-The binary locates the knowledge base in this order:
+The server locates the knowledge base in this order:
 
 1. `$OMARCHY_KB_ROOT` (must contain `data/kb.sqlite3`)
 2. `--kb /path/to/project-root`
@@ -32,7 +41,7 @@ The binary locates the knowledge base in this order:
    inside a checkout just works)
 4. the crate checkout's parent directory
 
-Then it serves JSON-RPC over stdio like any MCP server:
+MCP client registration:
 
 ```json
 {
@@ -42,12 +51,4 @@ Then it serves JSON-RPC over stdio like any MCP server:
     }
   }
 }
-```
-
-## Test
-
-```bash
-cd ..
-python3 scripts/test_mcp_rs.py        # protocol smoke test against this binary
-python3 scripts/diff_test_rs_vs_py.py # differential test vs the Python server
 ```

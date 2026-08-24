@@ -15,6 +15,7 @@ rusqlite = { version = "0.31", features = ["bundled"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 # HTTPS client for omarchy_check_updates only; rustls avoids OpenSSL linkage.
 ureq = { version = "2", default-features = false, features = ["tls"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 
 [profile.release]
 opt-level = 2

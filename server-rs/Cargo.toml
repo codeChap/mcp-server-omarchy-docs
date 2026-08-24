@@ -1,0 +1,20 @@
+[package]
+name = "mcp-server-omarchy"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "Offline Omarchy documentation MCP server — Rust port of server/mcp_server.py"
+
+[[bin]]
+name = "mcp-server-omarchy"
+path = "src/main.rs"
+
+[dependencies]
+# Bundled SQLite (compiled in, FTS5 enabled) so the binary has no system libsqlite3 dependency.
+rusqlite = { version = "0.31", features = ["bundled"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+# HTTPS client for omarchy_check_updates only; rustls avoids OpenSSL linkage.
+ureq = { version = "2", default-features = false, features = ["tls"] }
+
+[profile.release]
+opt-level = 2

@@ -1,4 +1,4 @@
-# mcp-server-omarchy
+# mcp-server-omarchy-docs
 
 Offline documentation MCP server for **Omarchy v4.0.0 "Quattro"**.
 100% Rust: one static binary (bundled SQLite with FTS5, JSON-RPC over stdio).
@@ -8,8 +8,9 @@ Native alternative to [Zeus-Deus/omarchy-mcp](https://github.com/Zeus-Deus/omarc
 (Docker + ChromaDB + sentence-transformers): same corpus idea, none of the
 container machinery. Thanks to that project for the original blueprint.
 
-All indexed content comes from [basecamp/omarchy](https://github.com/basecamp/omarchy)
-(MIT) and omarchy.org — this server only indexes and serves it. Code is MIT
+Indexed content comes from [basecamp/omarchy](https://github.com/basecamp/omarchy)
+(MIT), omarchy.org, and the [Omarchy Plugins](https://omarchyplugins.com/develop.html)
+authoring guides — this server only indexes and serves it. Code is MIT
 licensed: see [LICENSE](LICENSE).
 
 ## Knowledge base
@@ -18,6 +19,7 @@ licensed: see [LICENSE](LICENSE).
 |---|---:|---|
 | `manual` | ~186 | Official Quattro manual, linked to live omarchy.org URLs |
 | `repo-docs` | ~66 | Maintainer internals: theming engine, CLI router, update process |
+| `plugin-dev` | ~10 | [omarchyplugins.com](https://omarchyplugins.com/develop.html) authoring guides (clone, manifest, QML, publish) |
 | `config` | ~109 | Every shipped default config (hypr/*.lua, foot.ini, /etc overrides…) |
 | `release` | ~201 | All GitHub release notes through v4.0.0 |
 | `commit` | ~5600 | Full git history — design rationale lives in commit messages |
@@ -41,14 +43,14 @@ cargo test                                  # unit + end-to-end protocol tests
 {
   "mcpServers": {
     "omarchy-docs": {
-      "command": "/absolute/path/to/mcp-server-omarchy/server-rs/target/release/mcp-server-omarchy"
+      "command": "/absolute/path/to/mcp-server-omarchy-docs/server-rs/target/release/mcp-server-omarchy-docs"
     }
   }
 }
 ```
 
 The binary resolves `data/kb.sqlite3` relative to its parent directory, or set
-`OMARCHY_KB_ROOT=/path/to/mcp-server-omarchy` (or pass `--kb <root>`).
+`OMARCHY_KB_ROOT=/path/to/mcp-server-omarchy-docs` (or pass `--kb <root>`).
 
 ## Tools
 
@@ -74,5 +76,5 @@ scripts/fetch_sources.sh && (cd server-rs && cargo build --release && ./target/r
 ```
 
 Or grab the prebuilt weekly snapshot from the
-[`kb` release](https://github.com/codeChap/mcp-server-omarchy/releases/tag/kb).
+[`kb` release](https://github.com/codeChap/mcp-server-omarchy-docs/releases/tag/kb).
 See [docs/REFRESH.md](docs/REFRESH.md) for snapshot semantics.

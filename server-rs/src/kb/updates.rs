@@ -115,7 +115,7 @@ impl KnowledgeBase {
             "built_from_commit": m.get("built_from_commit").cloned().map(Value::String).unwrap_or(Value::Null),
             "built_at": m.get("built_at").cloned().unwrap_or_else(|| "unknown".into()),
             "snapshot_note": "Point-in-time snapshot. Run omarchy_check_updates (network) to compare against upstream, or just refresh: scripts/fetch_sources.sh && (cd server-rs && cargo build --release && ./target/release/build-kb)",
-            "corpus": "omarchy.org Quattro manual + basecamp/omarchy repo docs, defaults, releases & git history",
+            "corpus": "omarchy.org Quattro manual + basecamp/omarchy repo docs, omarchyplugins.com authoring guides, defaults, releases & git history",
         })
     }
 }
@@ -127,7 +127,7 @@ fn fetch_releases_json(url: &str) -> Result<Value, String> {
     let resp = agent
         .get(url)
         .set("Accept", "application/vnd.github+json")
-        .set("User-Agent", "mcp-server-omarchy")
+        .set("User-Agent", "mcp-server-omarchy-docs")
         .call();
     match resp {
         Ok(r) => r

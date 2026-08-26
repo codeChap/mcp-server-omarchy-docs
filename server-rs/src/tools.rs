@@ -5,14 +5,14 @@ use serde_json::{json, Value};
 fn search_docs_schema() -> Value {
     json!({
         "name": "omarchy_search_docs",
-        "description": "Search the offline Omarchy v4 (Quattro) knowledge base: the official manual, repo developer docs, shipped default configs, GitHub release notes, and full git commit history. Use for any 'how do I X in Omarchy' question before guessing. Results are grouped by trust tier (manual > configs > releases > commits). Zero/thin results include an escalation ladder for finding the answer elsewhere.",
+        "description": "Search the offline Omarchy v4 (Quattro) knowledge base: the official manual, repo developer docs, omarchyplugins.com plugin authoring guides, shipped default configs, GitHub release notes, and full git commit history. Use for any 'how do I X in Omarchy' question before guessing. Results are grouped by trust tier (manual > configs > releases > commits). Zero/thin results include an escalation ladder for finding the answer elsewhere.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Natural language question or keywords"},
                 "source_filter": {
                     "type": "string",
-                    "enum": ["omarchy", "manual", "config", "release"],
+                    "enum": ["omarchy", "manual", "plugin-dev", "config", "release"],
                     "description": "Restrict to a corpus (default: all)"
                 },
                 "omarchy_version": {
@@ -31,7 +31,7 @@ pub(crate) fn tools_list() -> Vec<Value> {
         search_docs_schema(),
         json!({
             "name": "omarchy_get_page",
-            "description": "Fetch a complete Omarchy manual chapter or developer doc as markdown. Pass a title (e.g. 'Hotkeys'), a live omarchy.org/manual/... URL, or a repo path (e.g. manual/06-themes.md). Prefer calling after search.",
+            "description": "Fetch a complete Omarchy manual chapter, developer doc, or plugin authoring guide as markdown. Pass a title (e.g. 'Hotkeys' or 'Develop a Custom Plugin'), a live URL (omarchy.org/manual/... or omarchyplugins.com/develop.html), or a repo path (e.g. manual/06-themes.md). Prefer calling after search.",
             "inputSchema": {
                 "type": "object",
                 "properties": {

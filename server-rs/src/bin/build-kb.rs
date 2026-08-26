@@ -1,11 +1,12 @@
 //! build-kb — Build the SQLite knowledge base from raw Omarchy sources.
 //!
-//! Rust port of the former `scripts/build_kb.py`. Corpus (all official):
-//!   - manual:    manual/NN-*.md from the basecamp/omarchy repo (Quattro v4)
-//!   - repo-docs: repo-internal developer docs (docs/*.md)
-//!   - config:    shipped default configs (config/**, default/**, etc/**)
-//!   - release:   GitHub release notes (data/raw/releases.json)
-//!   - commit:    one chunk per non-merge commit (design rationale)
+//! Rust port of the former `scripts/build_kb.py`. Corpus:
+//!   - manual:     manual/NN-*.md from the basecamp/omarchy repo (Quattro v4)
+//!   - repo-docs:  repo-internal developer docs (docs/*.md)
+//!   - plugin-dev: omarchyplugins.com authoring guides (develop + publish)
+//!   - config:     shipped default configs (config/**, default/**, etc/**)
+//!   - release:    GitHub release notes (data/raw/releases.json)
+//!   - commit:     one chunk per non-merge commit (design rationale)
 //!
 //! Output: data/kb.sqlite3 with an FTS5 table + metadata. Rerunning rebuilds it.
 
@@ -46,6 +47,11 @@ END;
 /// Manual chapter -> live URL mapping comes from the official site search index
 /// (chapter title -> url), fetched by scripts/fetch_sources.sh.
 const SEARCH_INDEX_FILE: &str = "data/raw/manual-search-index.json";
+const PLUGIN_GUIDES_DIR: &str = "data/raw/omarchyplugins";
+const PLUGIN_GUIDES: &[(&str, &str)] = &[
+    ("develop.html", "https://omarchyplugins.com/develop.html"),
+    ("publish.html", "https://omarchyplugins.com/publish.html"),
+];
 
 const CONFIG_EXTS: &[&str] = &[
     ".conf", ".ini", ".toml", ".kdl", ".css", ".rasi", ".json", ".sh",
@@ -100,6 +106,450 @@ fn is_image_line(line: &str) -> bool {
         Some(r) => r.ends_with(')'),
         None => false,
     }
+}
+
+/// Extract `<main>` and turn marketplace HTML into markdown.
+fn html_main_to_markdown(html: &str) -> String {
+    let Some(main_open) = html.find("<main") else {
+        return String::new();
+    };
+    let after_open = &html[main_open..];
+    let Some(gt) = after_open.find('>') else {
+        return String::new();
+    };
+    let inner = &after_open[gt + 1..];
+    let inner = inner.split("</main>").next().unwrap_or(inner);
+    let md = html_fragment_to_markdown(inner);
+    collapse_newlines(md.trim()).to_string()
+}
+
+fn html_fragment_to_markdown(html: &str) -> String {
+    let mut out = String::new();
+    let mut i = 0;
+    let chars: Vec<char> = html.chars().collect();
+    let n = chars.len();
+    let mut list_depth = 0usize;
+    while i < n {
+        if chars[i] == '<' {
+            let (tag, is_close, attrs, next) = parse_tag(&chars, i);
+            i = next;
+            let name = tag.to_ascii_lowercase();
+            if name.is_empty() {
+                continue;
+            }
+            if !is_close && SKIP_TAGS.contains(&name.as_str()) {
+                i = skip_until_close(&chars, i, &name);
+                continue;
+            }
+            if !is_close && (name == "pre" || (name == "div" && class_contains(&attrs, "code-block"))) {
+                if name == "div" && class_contains(&attrs, "code-block") {
+                    // Prefer the inner <pre>; skip the copy-button chrome.
+                    continue;
+                }
+                let (body, after) = take_until_close(&chars, i, "pre");
+                i = after;
+                let code = strip_tags(&body);
+                let lang = guess_fence_lang(&code);
+                out.push_str("\n\n```");
+                out.push_str(lang);
+                out.push('\n');
+                out.push_str(code.trim_end());
+                out.push_str("\n```\n\n");
+                continue;
+            }
+            match (name.as_str(), is_close) {
+                ("h1", false) => {
+                    let (body, after) = take_until_close(&chars, i, "h1");
+                    i = after;
+                    out.push_str("\n\n# ");
+                    out.push_str(&inline_md(&body));
+                    out.push_str("\n\n");
+                }
+                ("h2", false) => {
+                    let (body, after) = take_until_close(&chars, i, "h2");
+                    i = after;
+                    out.push_str("\n\n## ");
+                    out.push_str(&inline_md(&body));
+                    out.push_str("\n\n");
+                }
+                ("h3", false) => {
+                    let (body, after) = take_until_close(&chars, i, "h3");
+                    i = after;
+                    out.push_str("\n\n### ");
+                    out.push_str(&inline_md(&body));
+                    out.push_str("\n\n");
+                }
+                ("p", false) => {
+                    let (body, after) = take_until_close(&chars, i, "p");
+                    i = after;
+                    let t = inline_md(&body);
+                    if !t.trim().is_empty() {
+                        out.push_str("\n\n");
+                        out.push_str(&t);
+                        out.push_str("\n\n");
+                    }
+                }
+                ("br", false) | ("br/", false) => out.push('\n'),
+                ("li", false) => {
+                    let (body, after) = take_until_close(&chars, i, "li");
+                    i = after;
+                    let t = inline_md(&body);
+                    if !t.trim().is_empty() {
+                        out.push('\n');
+                        for _ in 0..list_depth.saturating_sub(1) {
+                            out.push_str("  ");
+                        }
+                        out.push_str("- ");
+                        out.push_str(t.trim());
+                        out.push('\n');
+                    }
+                }
+                ("ul" | "ol", false) => {
+                    list_depth += 1;
+                    out.push('\n');
+                }
+                ("ul" | "ol", true) => {
+                    list_depth = list_depth.saturating_sub(1);
+                    out.push('\n');
+                }
+                ("table", false) => {
+                    let (body, after) = take_until_close(&chars, i, "table");
+                    i = after;
+                    out.push('\n');
+                    out.push_str(&table_to_markdown(&body));
+                    out.push('\n');
+                }
+                ("blockquote", false) => {
+                    let (body, after) = take_until_close(&chars, i, "blockquote");
+                    i = after;
+                    for line in inline_md(&body).lines() {
+                        out.push_str("\n> ");
+                        out.push_str(line.trim());
+                    }
+                    out.push_str("\n\n");
+                }
+                _ => {}
+            }
+        } else {
+            // Bare text outside tags: keep if not whitespace-only runs we already collapse.
+            let start = i;
+            while i < n && chars[i] != '<' {
+                i += 1;
+            }
+            let raw: String = chars[start..i].iter().collect();
+            let decoded = decode_entities(&raw);
+            if !decoded.trim().is_empty() {
+                out.push_str(&decoded);
+            }
+        }
+    }
+    out
+}
+
+const SKIP_TAGS: &[&str] = &["script", "style", "svg", "button", "iframe", "noscript"];
+
+fn parse_tag(chars: &[char], i: usize) -> (String, bool, String, usize) {
+    if i >= chars.len() || chars[i] != '<' {
+        return (String::new(), false, String::new(), i + 1);
+    }
+    let mut j = i + 1;
+    let is_close = j < chars.len() && chars[j] == '/';
+    if is_close {
+        j += 1;
+    }
+    while j < chars.len() && chars[j].is_whitespace() {
+        j += 1;
+    }
+    let name_start = j;
+    while j < chars.len() && (chars[j].is_ascii_alphanumeric() || chars[j] == '/' || chars[j] == '-') {
+        if chars[j] == '/' {
+            break;
+        }
+        j += 1;
+    }
+    let name: String = chars[name_start..j].iter().collect();
+    let attr_start = j;
+    while j < chars.len() && chars[j] != '>' {
+        j += 1;
+    }
+    let attrs: String = chars[attr_start..j].iter().collect();
+    if j < chars.len() {
+        j += 1;
+    }
+    (name, is_close, attrs, j)
+}
+
+fn class_contains(attrs: &str, needle: &str) -> bool {
+    attrs.to_ascii_lowercase().contains(needle)
+}
+
+fn skip_until_close(chars: &[char], i: usize, name: &str) -> usize {
+    let close = format!("</{name}");
+    let hay: String = chars[i..].iter().collect();
+    if let Some(pos) = hay.to_ascii_lowercase().find(&close) {
+        let after = i + pos;
+        // advance past '>'
+        let mut k = after;
+        while k < chars.len() && chars[k] != '>' {
+            k += 1;
+        }
+        return (k + 1).min(chars.len());
+    }
+    chars.len()
+}
+
+fn take_until_close(chars: &[char], start: usize, name: &str) -> (String, usize) {
+    let close = format!("</{name}");
+    let hay: String = chars[start..].iter().collect();
+    let hay_l = hay.to_ascii_lowercase();
+    if let Some(pos) = hay_l.find(&close) {
+        let inner = &hay[..pos];
+        let mut k = start + pos;
+        while k < chars.len() && chars[k] != '>' {
+            k += 1;
+        }
+        (inner.to_string(), (k + 1).min(chars.len()))
+    } else {
+        (hay, chars.len())
+    }
+}
+
+fn strip_tags(html: &str) -> String {
+    let mut out = String::new();
+    let mut in_tag = false;
+    for ch in html.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => out.push(ch),
+            _ => {}
+        }
+    }
+    decode_entities(&out)
+}
+
+fn inline_md(html: &str) -> String {
+    let mut out = String::new();
+    let chars: Vec<char> = html.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '<' {
+            let (tag, is_close, attrs, next) = parse_tag(&chars, i);
+            i = next;
+            let name = tag.to_ascii_lowercase();
+            if !is_close && SKIP_TAGS.contains(&name.as_str()) {
+                i = skip_until_close(&chars, i, &name);
+                continue;
+            }
+            match (name.as_str(), is_close) {
+                ("code", false) => {
+                    let (body, after) = take_until_close(&chars, i, "code");
+                    i = after;
+                    out.push('`');
+                    out.push_str(strip_tags(&body).trim());
+                    out.push('`');
+                }
+                ("strong" | "b", false) => {
+                    let (body, after) = take_until_close(&chars, i, &name);
+                    i = after;
+                    out.push_str("**");
+                    out.push_str(&inline_md(&body));
+                    out.push_str("**");
+                }
+                ("em" | "i", false) => {
+                    let (body, after) = take_until_close(&chars, i, &name);
+                    i = after;
+                    out.push('*');
+                    out.push_str(&inline_md(&body));
+                    out.push('*');
+                }
+                ("a", false) => {
+                    let href = attr_value(&attrs, "href").unwrap_or_default();
+                    let (body, after) = take_until_close(&chars, i, "a");
+                    i = after;
+                    let text = inline_md(&body);
+                    if href.is_empty() {
+                        out.push_str(&text);
+                    } else {
+                        out.push('[');
+                        out.push_str(text.trim());
+                        out.push_str("](");
+                        out.push_str(&href);
+                        out.push(')');
+                    }
+                }
+                ("br", false) | ("br/", false) => out.push(' '),
+                _ => {}
+            }
+        } else {
+            let start = i;
+            while i < chars.len() && chars[i] != '<' {
+                i += 1;
+            }
+            let raw: String = chars[start..i].iter().collect();
+            out.push_str(&decode_entities(&raw));
+        }
+    }
+    collapse_ws_inline(&out)
+}
+
+fn attr_value(attrs: &str, name: &str) -> Option<String> {
+    let needle = format!("{name}=");
+    let lower = attrs.to_ascii_lowercase();
+    let idx = lower.find(&needle)?;
+    let rest = &attrs[idx + needle.len()..];
+    let rest = rest.trim_start();
+    let quote = rest.chars().next()?;
+    if quote == '"' || quote == '\'' {
+        let end = rest[1..].find(quote)?;
+        Some(decode_entities(&rest[1..1 + end]))
+    } else {
+        Some(rest.split_whitespace().next().unwrap_or("").to_string())
+    }
+}
+
+fn table_to_markdown(html: &str) -> String {
+    let mut rows: Vec<Vec<String>> = Vec::new();
+    let chars: Vec<char> = html.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '<' {
+            let (tag, is_close, _, next) = parse_tag(&chars, i);
+            i = next;
+            let name = tag.to_ascii_lowercase();
+            if !is_close && name == "tr" {
+                let (body, after) = take_until_close(&chars, i, "tr");
+                i = after;
+                let cells = table_row_cells(&body);
+                if !cells.is_empty() {
+                    rows.push(cells);
+                }
+            }
+        } else {
+            i += 1;
+        }
+    }
+    if rows.is_empty() {
+        return String::new();
+    }
+    let width = rows.iter().map(|r| r.len()).max().unwrap_or(0);
+    let mut md = String::new();
+    for (ri, row) in rows.iter().enumerate() {
+        md.push('|');
+        for ci in 0..width {
+            md.push(' ');
+            md.push_str(row.get(ci).map(|s| s.as_str()).unwrap_or(""));
+            md.push_str(" |");
+        }
+        md.push('\n');
+        if ri == 0 {
+            md.push('|');
+            for _ in 0..width {
+                md.push_str(" --- |");
+            }
+            md.push('\n');
+        }
+    }
+    md
+}
+
+fn table_row_cells(html: &str) -> Vec<String> {
+    let mut cells = Vec::new();
+    let chars: Vec<char> = html.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '<' {
+            let (tag, is_close, _, next) = parse_tag(&chars, i);
+            i = next;
+            let name = tag.to_ascii_lowercase();
+            if !is_close && (name == "td" || name == "th") {
+                let (body, after) = take_until_close(&chars, i, &name);
+                i = after;
+                cells.push(inline_md(&body).trim().replace('|', "\\|"));
+            }
+        } else {
+            i += 1;
+        }
+    }
+    cells
+}
+
+fn guess_fence_lang(code: &str) -> &'static str {
+    let t = code.trim_start();
+    if t.starts_with('{') {
+        "json"
+    } else if t.starts_with("import ") || t.contains("BarWidget") || t.contains("QtQuick") {
+        "qml"
+    } else if t.starts_with('#') && t.contains("Custom Clock") {
+        "md"
+    } else if t.contains("omarchy plugin") || t.contains("PLUGIN_") || t.contains("qmllint") {
+        "bash"
+    } else if t.starts_with("MIT License") {
+        "text"
+    } else {
+        ""
+    }
+}
+
+fn decode_entities(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut rest = s;
+    while let Some(amp) = rest.find('&') {
+        out.push_str(&rest[..amp]);
+        rest = &rest[amp..];
+        if let Some(semi) = rest.find(';') {
+            let ent = &rest[..=semi];
+            match ent {
+                "&amp;" => out.push('&'),
+                "&lt;" => out.push('<'),
+                "&gt;" => out.push('>'),
+                "&quot;" => out.push('"'),
+                "&apos;" | "&#39;" | "&rsquo;" => out.push('\''),
+                "&nbsp;" => out.push(' '),
+                "&mdash;" => out.push_str("—"),
+                "&ndash;" => out.push('–'),
+                _ if ent.starts_with("&#x") || ent.starts_with("&#X") => {
+                    if let Ok(n) = u32::from_str_radix(&ent[3..ent.len() - 1], 16) {
+                        if let Some(c) = char::from_u32(n) {
+                            out.push(c);
+                        }
+                    }
+                }
+                _ if ent.starts_with("&#") => {
+                    if let Ok(n) = ent[2..ent.len() - 1].parse::<u32>() {
+                        if let Some(c) = char::from_u32(n) {
+                            out.push(c);
+                        }
+                    }
+                }
+                _ => out.push_str(ent),
+            }
+            rest = &rest[semi + 1..];
+        } else {
+            out.push_str(rest);
+            rest = "";
+            break;
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
+fn collapse_ws_inline(s: &str) -> String {
+    let mut out = String::new();
+    let mut prev_space = false;
+    for ch in s.chars() {
+        if ch.is_whitespace() {
+            if !prev_space {
+                out.push(' ');
+                prev_space = true;
+            }
+        } else {
+            prev_space = false;
+            out.push(ch);
+        }
+    }
+    out
 }
 
 /// Replace runs of 3+ newlines with exactly two.
@@ -405,6 +855,49 @@ impl Ingested<'_> {
         count
     }
 
+    /// Marketplace plugin authoring guides (HTML → markdown sections).
+    fn ingest_plugin_guides(&self, root: &Path) -> usize {
+        let dir = root.join(PLUGIN_GUIDES_DIR);
+        let mut count = 0;
+        for &(filename, url) in PLUGIN_GUIDES {
+            let path = dir.join(filename);
+            let Ok(raw) = fs::read_to_string(&path) else {
+                println!("  ! missing {filename}; run scripts/fetch_sources.sh");
+                continue;
+            };
+            let md = html_main_to_markdown(&raw);
+            if md.trim().is_empty() {
+                println!("  ! empty conversion for {filename}");
+                continue;
+            }
+            let title = match find_h1(&md) {
+                Some(t) if !t.is_empty() => t,
+                _ => filename.trim_end_matches(".html").to_string(),
+            };
+            let rel = format!("omarchyplugins/{filename}");
+            for (sec_title, body) in split_sections(&md, &title) {
+                let stored = if sec_title == title {
+                    body.clone()
+                } else {
+                    format!("# {}\n\n{}", sec_title, body)
+                };
+                self.add(
+                    "plugin-dev",
+                    &title,
+                    &sec_title,
+                    &stored,
+                    &rel,
+                    url,
+                    None,
+                    None,
+                    1,
+                );
+                count += 1;
+            }
+        }
+        count
+    }
+
     fn ingest_releases(&self, root: &Path) -> usize {
         let Ok(text) = fs::read_to_string(root.join("data/raw/releases.json")) else {
             return 0;
@@ -573,6 +1066,7 @@ fn main() {
     con.execute_batch("BEGIN;").expect("begin transaction");
     ing.ingest_manual(&repo, &root);
     ing.ingest_repo_docs(&repo);
+    ing.ingest_plugin_guides(&root);
     ing.ingest_configs(&repo);
     ing.ingest_releases(&root);
     ing.ingest_commits(&repo);
@@ -668,5 +1162,23 @@ mod tests {
         let secs = split_release_sections("top bits\n## Added\n\nstuff here");
         assert_eq!(secs[0].0, "Overview");
         assert_eq!(secs[1].0, "Added");
+    }
+
+    #[test]
+    fn plugin_guide_html_keeps_headings_code_and_table() {
+        let html = r#"<html><main id="main-content">
+          <h1>Develop a Custom Plugin</h1>
+          <p>Clone with <code>omarchy plugin clone</code>.</p>
+          <h2>Define the Plugin Contract</h2>
+          <table><tr><th>Plugin kind</th><th>entryPoints</th></tr>
+          <tr><td>bar-widget</td><td>barWidget</td></tr></table>
+          <pre><code>{"schemaVersion": 1}</code></pre>
+        </main></html>"#;
+        let md = html_main_to_markdown(html);
+        assert!(md.contains("# Develop a Custom Plugin"), "{md}");
+        assert!(md.contains("## Define the Plugin Contract"), "{md}");
+        assert!(md.contains("`omarchy plugin clone`"), "{md}");
+        assert!(md.contains("| bar-widget |"), "{md}");
+        assert!(md.contains("schemaVersion"), "{md}");
     }
 }

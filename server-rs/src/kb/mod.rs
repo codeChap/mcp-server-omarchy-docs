@@ -20,10 +20,10 @@ use std::path::Path;
 use rusqlite::{params_from_iter, Connection};
 use serde_json::{Map, Value};
 
-/// Result tiers: the current manual beats repo internals beats shipped configs
+/// Result tiers: the current manual (plus plugin-dev guides) beats shipped configs
 /// beats historical release notes, regardless of raw bm25 score.
 pub(crate) const TIERS: &[(&str, &[&str])] = &[
-    ("core", &["manual", "repo-docs"]),
+    ("core", &["manual", "repo-docs", "plugin-dev"]),
     ("configs", &["config"]),
     ("releases", &["release"]),
     ("history", &["commit"]),
@@ -31,7 +31,9 @@ pub(crate) const TIERS: &[(&str, &[&str])] = &[
 
 /// Reduced tier table for source_filter = "omarchy" (docs, then releases).
 pub(crate) const OMARCHY_TIERS: &[(&str, &[&str])] =
-    &[("core", &["manual", "repo-docs"]), ("releases", &["release"])];
+    &[("core", &["manual", "repo-docs", "plugin-dev"]), ("releases", &["release"])];
+
+pub(crate) const PLUGIN_DEV_TIERS: &[(&str, &[&str])] = &[("core", &["plugin-dev"])];
 
 pub(crate) fn tier_limit(tier: &str) -> usize {
     match tier {

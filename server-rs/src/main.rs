@@ -1,4 +1,4 @@
-//! mcp-server-omarchy — offline Omarchy (Quattro/v4) documentation MCP server.
+//! mcp-server-omarchy-docs — offline Omarchy (Quattro/v4) documentation MCP server.
 //!
 //! Newline-delimited JSON-RPC over stdio per the MCP spec, backed by a
 //! read-only SQLite FTS5 knowledge base (`data/kb.sqlite3`). Rebuild the

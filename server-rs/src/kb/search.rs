@@ -110,6 +110,7 @@ impl KnowledgeBase {
 
         let tiers: &TierTable = match source_filter {
             Some("omarchy") => super::OMARCHY_TIERS,
+            Some("plugin-dev") => super::PLUGIN_DEV_TIERS,
             Some("manual") | Some("docs") => &TIERS[0..1],
             Some("config") => &TIERS[1..2],
             Some("release") => &TIERS[2..3],

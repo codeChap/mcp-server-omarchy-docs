@@ -3,12 +3,17 @@
 Search results interleave four tiers, always in this priority order — a manual
 hit outranks a config hit regardless of raw text score.
 
-## Tier 1 — `core` (manual, repo-docs)
+## Tier 1 — `core` (manual, repo-docs, plugin-dev)
 
 Authoritative for **v4.0.0 behavior as shipped**. The manual is generated from
 the same markdown that renders omarchy.org/manual; repo-docs are the
 maintainers' internal design docs (theming engine, CLI router, update process).
-Trust these for what Omarchy does by default.
+`plugin-dev` is the community marketplace authoring tutorial
+([develop.html](https://omarchyplugins.com/develop.html) and
+[publish.html](https://omarchyplugins.com/publish.html)): clone, manifest
+kinds, QML bar/panel examples, validate/run, and listing a plugin. Trust it
+for *how to build a third-party plugin*; the official shell contract still
+lives in the repo (`shell/README.md`, `manual/32-shell-plugins.md`).
 
 ## Tier 2 — `configs`
 

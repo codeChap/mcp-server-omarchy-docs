@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Refresh raw doc sources: the basecamp/omarchy repo and GitHub release notes.
+# Refresh raw doc sources: the basecamp/omarchy repo, GitHub release notes,
+# and omarchyplugins.com authoring guides.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p data/raw
@@ -21,5 +22,19 @@ curl -fsSL "https://api.github.com/repos/basecamp/omarchy/releases?per_page=100"
 # Official site search index: maps manual chapter titles to live omarchy.org URLs.
 echo "Fetching manual search index..."
 curl -fsSL "https://omarchy.org/manual/search-index.json" -o data/raw/manual-search-index.json
+
+# Marketplace plugin authoring guides (not in basecamp/omarchy).
+echo "Fetching omarchyplugins.com authoring guides..."
+mkdir -p data/raw/omarchyplugins
+for page in develop.html publish.html; do
+    if curl -fsSL -A "mcp-server-omarchy-docs/kb" \
+        "https://omarchyplugins.com/${page}" \
+        -o "data/raw/omarchyplugins/${page}"; then
+        echo "  ${page}"
+    else
+        echo "  ! failed to fetch ${page} (build-kb will skip it)" >&2
+        rm -f "data/raw/omarchyplugins/${page}"
+    fi
+done
 
 echo "Done."

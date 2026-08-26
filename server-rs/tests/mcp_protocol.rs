@@ -15,7 +15,7 @@ struct Client {
 
 impl Client {
     fn spawn() -> Self {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_mcp-server-omarchy"))
+        let mut child = Command::new(env!("CARGO_BIN_EXE_mcp-server-omarchy-docs"))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -146,6 +146,37 @@ fn search_finds_theme_docs_in_manual_tier() {
         results.iter().any(|x| x["source"] == "manual"
             && x["title"].as_str().unwrap().to_lowercase().contains("theme")),
         "expected a manual theme hit, got: {results:?}"
+    );
+}
+
+#[test]
+fn plugin_dev_guide_is_searchable() {
+    let mut c = client();
+    let r = c.call_tool(
+        "omarchy_search_docs",
+        json!({"query": "omarchy plugin clone clock BarWidget", "source_filter": "plugin-dev"}),
+    );
+    let results = r["results"].as_array().unwrap();
+    assert!(
+        results.iter().any(|x| x["source"] == "plugin-dev"
+            && x["url"].as_str().unwrap_or("").contains("omarchyplugins.com/develop")),
+        "expected plugin-dev develop.html hit, got: {results:?}"
+    );
+}
+
+#[test]
+fn get_page_loads_plugin_develop_guide() {
+    let mut c = client();
+    let r = c.call_tool(
+        "omarchy_get_page",
+        json!({"name_or_url": "https://omarchyplugins.com/develop.html"}),
+    );
+    assert_eq!(r["source"], "plugin-dev");
+    let md = r["markdown"].as_str().unwrap_or("");
+    assert!(md.contains("BarWidget"), "missing BarWidget example: {}", &md[..md.len().min(200)]);
+    assert!(
+        md.contains("omarchy plugin clone") || md.contains("omarchy plugin validate"),
+        "missing clone/validate commands"
     );
 }
 

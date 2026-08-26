@@ -23,8 +23,9 @@ The repo is the documentation for internals.
 - `config/`, `default/` — shipped defaults incl. the Lua Hyprland configs.
 - Git history: `git -C ~/.local/share/omarchy log --oneline --grep=<term>` —
   design rationale lives in commit messages.
-- Plugin development with no docs: read real plugins from
-  omarchyplugins.com as executable documentation.
+- Plugin development: search the local `plugin-dev` source first (indexed from
+  omarchyplugins.com/develop.html and publish.html). Then read real plugins
+  from `$OMARCHY_PATH/shell/plugins/` as executable documentation.
 
 ## L2 — Upstream docs (seconds–minutes; needs web)
 

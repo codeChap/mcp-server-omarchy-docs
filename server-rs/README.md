@@ -1,8 +1,8 @@
-# mcp-server-omarchy (Rust)
+# mcp-server-omarchy-docs (Rust)
 
 The whole project is Rust: two binaries built from this crate.
 
-- **`mcp-server-omarchy`** — offline Omarchy documentation MCP server:
+- **`mcp-server-omarchy-docs`** — offline Omarchy documentation MCP server:
   newline-delimited JSON-RPC over stdio, backed by a read-only SQLite FTS5
   knowledge base (`../data/kb.sqlite3`).
 - **`build-kb`** — builds that knowledge base from raw sources fetched by
@@ -18,7 +18,7 @@ OpenSSL.
 ## Build & test
 
 ```bash
-cargo build --release        # → target/release/{mcp-server-omarchy,build-kb}
+cargo build --release        # → target/release/{mcp-server-omarchy-docs,build-kb}
 cargo test                   # builder unit tests + end-to-end protocol tests
 ```
 
@@ -47,7 +47,7 @@ MCP client registration:
 {
   "mcpServers": {
     "omarchy-docs": {
-      "command": "/absolute/path/to/mcp-server-omarchy/server-rs/target/release/mcp-server-omarchy"
+      "command": "/absolute/path/to/mcp-server-omarchy-docs/server-rs/target/release/mcp-server-omarchy-docs"
     }
   }
 }

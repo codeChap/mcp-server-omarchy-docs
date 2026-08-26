@@ -15,7 +15,7 @@ plus the refresh command.
    ```
 3. **Download a prebuilt snapshot**: this repo runs a weekly GitHub Action
    (Mondays) that rebuilds, smoke-tests, and attaches `kb.sqlite3` to the
-   [`kb` release](https://github.com/codeChap/mcp-server-omarchy/releases/tag/kb).
+   [`kb` release](https://github.com/codeChap/mcp-server-omarchy-docs/releases/tag/kb).
    Drop it into `data/` next to the server — no fetch/build needed.
 
 
@@ -26,6 +26,8 @@ plus the refresh command.
   can drift ahead of omarchy.org, which is fine (it's the same source).
 - Commit tier tracks master, so post-release work is searchable immediately
   after a refresh.
+- Plugin authoring guides are fetched from omarchyplugins.com (`develop.html`,
+  `publish.html`) at the same time as the repo.
 
 ## When to refresh
 

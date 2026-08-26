@@ -10,7 +10,7 @@ in [AGENT_PLAYBOOK.md](AGENT_PLAYBOOK.md); this page is for humans.
 | 3 | github.com/basecamp/omarchy — closed issues | Instant (read) | "Has anyone hit this?" — densest archive of solved problems | Always search before posting anywhere. |
 | 4 | Omarchy Discord — discord.gg/tXFUdasqhY | Minutes–hours | Quick questions, config help, plugin/theme dev, "is this known-broken in 4.0.0?" | Search channel history; state version + attach `omarchy-debug` output in the first message. |
 | 5 | GitHub issues (posting) | Days | Reproducible bugs, regressions, feature requests | Reproduce on default configs if possible; include version, `omarchy-debug` output, exact steps. Not a support forum. |
-| 6 | omarchy.org/themes + omarchyplugins.com | Instant | Discovery + working source code for theme/plugin development | Read a shipped plugin's source before asking how plugins work. |
+| 6 | omarchy.org/themes + omarchyplugins.com | Instant | Theme catalog; plugin marketplace plus develop/publish guides (indexed in this KB as `plugin-dev`) | Read a shipped plugin's source before asking how plugins work. |
 
 ## The one command to know
 

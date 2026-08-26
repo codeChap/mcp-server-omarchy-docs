@@ -42,7 +42,7 @@ jobs:
       - name: Stamp snapshot info
         id: meta
         run: |
-          LATEST=$(curl -fsSL -H 'User-Agent: mcp-server-omarchy' \
+          LATEST=$(curl -fsSL -H 'User-Agent: mcp-server-omarchy-docs' \
             'https://api.github.com/repos/basecamp/omarchy/releases?per_page=1' | jq -r '.[0].tag_name')
           echo "tag=$LATEST" >> "$GITHUB_OUTPUT"
 

@@ -1,5 +1,5 @@
-//! Page retrieval: by URL, repo path, or (fuzzy) title across manual and
-//! repo-doc sources.
+//! Page retrieval: by URL, repo path, or (fuzzy) title across manual,
+//! repo-doc, and plugin-dev sources.
 
 use rusqlite::types::Value as SqlValue;
 use serde_json::{json, Value};
@@ -39,7 +39,7 @@ impl KnowledgeBase {
             };
         }
 
-        // By (partial) title across manual + repo docs
+        // By (partial) title across manual, repo docs, and plugin guides
         let mut matches: Vec<String> = self
             .all_page_titles()
             .into_iter()
@@ -67,7 +67,7 @@ impl KnowledgeBase {
     fn all_page_titles(&self) -> Vec<String> {
         query(
             &self.con,
-            "SELECT DISTINCT title FROM chunks WHERE source IN ('manual','repo-docs')",
+            "SELECT DISTINCT title FROM chunks WHERE source IN ('manual','repo-docs','plugin-dev')",
             &[],
             |r| r.get::<_, String>(0),
         )
@@ -87,7 +87,7 @@ impl KnowledgeBase {
         let rows: Vec<(String, String, String, String, String)> = query(
             &self.con,
             "SELECT source, section, body, url, path FROM chunks \
-             WHERE title = ?1 AND source IN ('manual','repo-docs') ORDER BY id",
+             WHERE title = ?1 AND source IN ('manual','repo-docs','plugin-dev') ORDER BY id",
             &[SqlValue::from(title.to_string())],
             |r| {
                 Ok((

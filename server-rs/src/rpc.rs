@@ -170,8 +170,7 @@ pub(crate) fn serve(kb: &KnowledgeBase) {
             "notifications/initialized" => {}
             "ping" => emit(&json!({"jsonrpc": "2.0", "id": id, "result": {}}).to_string()),
             "tools/list" => emit(
-                &json!({"jsonrpc": "2.0", "id": id, "result": {"tools": tools_list()}})
-                    .to_string(),
+                &json!({"jsonrpc": "2.0", "id": id, "result": {"tools": tools_list()}}).to_string(),
             ),
             "tools/call" => tools_call(kb, &req, id),
             _ => {
@@ -211,12 +210,18 @@ fn initialize_reply(req: &Value, id: Value) {
 }
 
 fn tools_call(kb: &KnowledgeBase, req: &Value, id: Value) {
-    let name = req.pointer("/params/name").and_then(Value::as_str).unwrap_or("");
-    let arguments = req.pointer("/params/arguments").cloned().unwrap_or(json!({}));
+    let name = req
+        .pointer("/params/name")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let arguments = req
+        .pointer("/params/arguments")
+        .cloned()
+        .unwrap_or(json!({}));
     match handle_call(kb, name, &arguments) {
-        Ok(payload) => emit(
-            &json!({"jsonrpc": "2.0", "id": id, "result": make_result(&payload)}).to_string(),
-        ),
+        Ok(payload) => {
+            emit(&json!({"jsonrpc": "2.0", "id": id, "result": make_result(&payload)}).to_string())
+        }
         Err(e) => {
             log(&format!("tool error: {e}"));
             emit(

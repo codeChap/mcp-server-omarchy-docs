@@ -20,9 +20,7 @@ pub(crate) fn truncate_chars(s: &str, cap: usize) -> String {
 
 /// Numeric version comparison on dot-separated integer components.
 pub(crate) fn parse_version_key(v: &str) -> Vec<u64> {
-    v.split('.')
-        .filter_map(|p| p.parse::<u64>().ok())
-        .collect()
+    v.split('.').filter_map(|p| p.parse::<u64>().ok()).collect()
 }
 
 pub(crate) fn lt_versions(a: &[u64], b: &[u64]) -> bool {

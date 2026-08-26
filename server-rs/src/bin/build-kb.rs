@@ -54,15 +54,23 @@ const PLUGIN_GUIDES: &[(&str, &str)] = &[
 ];
 
 const CONFIG_EXTS: &[&str] = &[
-    ".conf", ".ini", ".toml", ".kdl", ".css", ".rasi", ".json", ".sh",
-    ".bash", ".zsh", ".lua",
+    ".conf", ".ini", ".toml", ".kdl", ".css", ".rasi", ".json", ".sh", ".bash", ".zsh", ".lua",
 ];
 const CONFIG_SKIP_DIRS: &[&str] = &[
-    "applications", "autostart", "environment.d", "fontconfig", "systemd",
-    "wallpapers", "backgrounds",
+    "applications",
+    "autostart",
+    "environment.d",
+    "fontconfig",
+    "systemd",
+    "wallpapers",
+    "backgrounds",
 ];
-const CONFIG_NAME_ALLOWLIST: &[&str] =
-    &["hyprland.conf", "hyprlock.conf", "hypridle.conf", "makefile"];
+const CONFIG_NAME_ALLOWLIST: &[&str] = &[
+    "hyprland.conf",
+    "hyprlock.conf",
+    "hypridle.conf",
+    "makefile",
+];
 
 const CONFIG_MAX_BYTES: u64 = 200_000;
 const BODY_CAP: usize = 50_000;
@@ -83,10 +91,7 @@ fn truncate_chars(s: &str, cap: usize) -> String {
 
 /// Strip image-only lines and collapse whitespace; keep code fences intact.
 fn clean_markdown(text: &str) -> String {
-    let kept: Vec<&str> = text
-        .lines()
-        .filter(|line| !is_image_line(line))
-        .collect();
+    let kept: Vec<&str> = text.lines().filter(|line| !is_image_line(line)).collect();
     collapse_newlines(&kept.join("\n")).trim().to_string()
 }
 
@@ -141,7 +146,9 @@ fn html_fragment_to_markdown(html: &str) -> String {
                 i = skip_until_close(&chars, i, &name);
                 continue;
             }
-            if !is_close && (name == "pre" || (name == "div" && class_contains(&attrs, "code-block"))) {
+            if !is_close
+                && (name == "pre" || (name == "div" && class_contains(&attrs, "code-block")))
+            {
                 if name == "div" && class_contains(&attrs, "code-block") {
                     // Prefer the inner <pre>; skip the copy-button chrome.
                     continue;
@@ -261,7 +268,9 @@ fn parse_tag(chars: &[char], i: usize) -> (String, bool, String, usize) {
         j += 1;
     }
     let name_start = j;
-    while j < chars.len() && (chars[j].is_ascii_alphanumeric() || chars[j] == '/' || chars[j] == '-') {
+    while j < chars.len()
+        && (chars[j].is_ascii_alphanumeric() || chars[j] == '/' || chars[j] == '-')
+    {
         if chars[j] == '/' {
             break;
         }
@@ -648,9 +657,10 @@ fn load_url_map(root: &Path) -> std::collections::HashMap<String, String> {
     if let Ok(text) = fs::read_to_string(root.join(SEARCH_INDEX_FILE)) {
         if let Ok(Value::Array(entries)) = serde_json::from_str::<Value>(&text) {
             for e in entries {
-                if let (Some(chapter), Some(url)) =
-                    (e.get("chapter").and_then(Value::as_str), e.get("url").and_then(Value::as_str))
-                {
+                if let (Some(chapter), Some(url)) = (
+                    e.get("chapter").and_then(Value::as_str),
+                    e.get("url").and_then(Value::as_str),
+                ) {
                     out.entry(norm_key(chapter))
                         .or_insert_with(|| format!("https://omarchy.org{url}"));
                 }
@@ -703,15 +713,25 @@ impl Ingested<'_> {
         let mut files: Vec<PathBuf> = list_md_files(&manual_dir);
         files.sort();
         for f in files {
-            let Ok(raw) = fs::read_to_string(&f) else { continue };
+            let Ok(raw) = fs::read_to_string(&f) else {
+                continue;
+            };
             let text = clean_markdown(raw.strip_prefix('\u{feff}').unwrap_or(&raw));
             let title = match find_h1(&text) {
                 Some(t) if !t.is_empty() => t,
-                _ => f.file_stem().unwrap_or_default().to_string_lossy().into_owned(),
+                _ => f
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .into_owned(),
             };
             let url = url_map.get(&norm_key(&title)).cloned().unwrap_or_default();
             if url.is_empty() {
-                println!("  ! no live URL for {} ('{}'); indexing without link", file_name(&f), title);
+                println!(
+                    "  ! no live URL for {} ('{}'); indexing without link",
+                    file_name(&f),
+                    title
+                );
             }
             let rel = rel_to_repo(repo, &f);
             for (sec_title, body) in split_sections(&text, &title) {
@@ -720,7 +740,9 @@ impl Ingested<'_> {
                 } else {
                     format!("# {}\n\n{}", sec_title, body)
                 };
-                self.add("manual", &title, &sec_title, &stored, &rel, &url, None, None, 1);
+                self.add(
+                    "manual", &title, &sec_title, &stored, &rel, &url, None, None, 1,
+                );
                 count += 1;
             }
         }
@@ -733,18 +755,32 @@ impl Ingested<'_> {
         let mut files: Vec<PathBuf> = list_md_files(&docs_dir);
         files.sort();
         for f in files {
-            let Ok(raw) = fs::read_to_string(&f) else { continue };
+            let Ok(raw) = fs::read_to_string(&f) else {
+                continue;
+            };
             let text = clean_markdown(&raw);
             let title = match match_h1(&text) {
                 Some(t) if !t.is_empty() => t,
-                _ => f.file_stem().unwrap_or_default().to_string_lossy().into_owned(),
+                _ => f
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .into_owned(),
             };
             let rel = rel_to_repo(repo, &f);
-            let url = format!(
-                "https://github.com/basecamp/omarchy/tree/master/{rel}"
-            );
+            let url = format!("https://github.com/basecamp/omarchy/tree/master/{rel}");
             for (sec_title, body) in split_sections(&text, &title) {
-                self.add("repo-docs", &title, &sec_title, &body, &rel, &url, None, None, 1);
+                self.add(
+                    "repo-docs",
+                    &title,
+                    &sec_title,
+                    &body,
+                    &rel,
+                    &url,
+                    None,
+                    None,
+                    1,
+                );
                 count += 1;
             }
         }
@@ -763,7 +799,10 @@ impl Ingested<'_> {
             walk_scandir(&basedir, &mut files);
             for f in files {
                 let rel = rel_to_repo(repo, &f);
-                if rel.split('/').any(|part| CONFIG_SKIP_DIRS.contains(&part.trim())) {
+                if rel
+                    .split('/')
+                    .any(|part| CONFIG_SKIP_DIRS.contains(&part.trim()))
+                {
                     continue;
                 }
                 let Ok(meta) = fs::metadata(&f) else { continue };
@@ -776,7 +815,9 @@ impl Ingested<'_> {
                     continue;
                 }
                 let name = file_name(&f).to_lowercase();
-                let ext = f.extension().map(|e| format!(".{}", e.to_string_lossy().to_lowercase()));
+                let ext = f
+                    .extension()
+                    .map(|e| format!(".{}", e.to_string_lossy().to_lowercase()));
                 let ext_ok = ext
                     .as_deref()
                     .map(|e| CONFIG_EXTS.contains(&e))
@@ -787,7 +828,9 @@ impl Ingested<'_> {
                 {
                     continue;
                 }
-                let Ok(full) = fs::read_to_string(&f) else { continue };
+                let Ok(full) = fs::read_to_string(&f) else {
+                    continue;
+                };
                 let body = full.trim();
                 if body.is_empty() {
                     continue;
@@ -802,8 +845,10 @@ impl Ingested<'_> {
     fn ingest_commits(&self, repo: &Path) -> usize {
         let output = Command::new("git")
             .args([
-                "-C", &repo.to_string_lossy(),
-                "log", "--no-merges",
+                "-C",
+                &repo.to_string_lossy(),
+                "log",
+                "--no-merges",
                 "--format=%H%x00%as%x00%s%x00%b%x01",
             ])
             .output();
@@ -833,7 +878,11 @@ impl Ingested<'_> {
             let sha = parts[0];
             let date = parts[1];
             let subject = parts[2];
-            let body = if parts.len() == 4 { parts[3].trim() } else { "" };
+            let body = if parts.len() == 4 {
+                parts[3].trim()
+            } else {
+                ""
+            };
             let content = if body.is_empty() {
                 subject.to_string()
             } else {
@@ -1012,7 +1061,9 @@ fn rel_to_repo(repo: &Path, f: &Path) -> String {
 }
 
 fn file_name(p: &Path) -> &str {
-    p.file_name().map(|s| s.to_str().unwrap_or("")).unwrap_or("")
+    p.file_name()
+        .map(|s| s.to_str().unwrap_or(""))
+        .unwrap_or("")
 }
 
 /// Short SHA the repo clone is pinned to (mirrors the original builder).
@@ -1083,10 +1134,8 @@ fn main() {
         })
         .unwrap_or_else(|| "unknown".into());
 
-    con.execute_batch(
-        "CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);",
-    )
-    .expect("meta table");
+    con.execute_batch("CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);")
+        .expect("meta table");
     let built_at = chrono::Utc::now().format("%Y-%m-%d").to_string();
     for (k, v) in [
         ("latest_release", meta_version.as_str()),
@@ -1115,12 +1164,7 @@ fn main() {
         .filter_map(Result::ok)
         .collect();
     let total: i64 = counts.iter().map(|(_, n)| n).sum();
-    println!(
-        "Built {}: {} chunks {:?}",
-        file_name(&db),
-        total,
-        counts
-    );
+    println!("Built {}: {} chunks {:?}", file_name(&db), total, counts);
     println!("Latest release pinned: {meta_version}");
 }
 

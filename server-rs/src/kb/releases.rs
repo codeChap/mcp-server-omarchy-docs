@@ -46,8 +46,11 @@ impl KnowledgeBase {
             let all_rows = self.all_release_rows();
             let mut releases = Vec::new();
             for v in versions {
-                let vr: Vec<ReleaseRow> =
-                    all_rows.iter().filter(|r| r.version == v).cloned().collect();
+                let vr: Vec<ReleaseRow> = all_rows
+                    .iter()
+                    .filter(|r| r.version == v)
+                    .cloned()
+                    .collect();
                 releases.push(format_release(&v, &vr));
             }
             return json!({ "count": releases.len(), "releases": releases });
@@ -147,8 +150,11 @@ impl KnowledgeBase {
         let all_rows = self.all_release_rows();
         let mut releases: Vec<Value> = Vec::new();
         for v in &between {
-            let vr: Vec<ReleaseRow> =
-                all_rows.iter().filter(|r| r.version == *v).cloned().collect();
+            let vr: Vec<ReleaseRow> = all_rows
+                .iter()
+                .filter(|r| r.version == *v)
+                .cloned()
+                .collect();
             let rel = format_release(v, &vr);
             if breaking_only && !flags_breaking(&rel) {
                 continue;
@@ -178,8 +184,11 @@ impl KnowledgeBase {
 
     /// Newest known versions, descending.
     pub(crate) fn recent_versions(&self, n: usize) -> Vec<String> {
-        let mut versions: Vec<String> =
-            self.all_release_rows().into_iter().map(|r| r.version).collect();
+        let mut versions: Vec<String> = self
+            .all_release_rows()
+            .into_iter()
+            .map(|r| r.version)
+            .collect();
         versions.sort_by(|a, b| cmp_versions(b, a));
         versions.dedup();
         versions.into_iter().take(n).collect()
@@ -196,7 +205,13 @@ fn unknown_version_error(given: &str, known: &[String]) -> Value {
 /// Keyword heuristic mirroring the Python port's breaking-change flagging.
 fn flags_breaking(release: &Value) -> bool {
     const MARKERS: &[&str] = &[
-        "breaking", "removed", "renamed", "migration", "moved to", "now requires", "incompatible",
+        "breaking",
+        "removed",
+        "renamed",
+        "migration",
+        "moved to",
+        "now requires",
+        "incompatible",
     ];
     let text = release["notes"].as_str().unwrap_or("").to_lowercase();
     MARKERS.iter().any(|m| text.contains(m))

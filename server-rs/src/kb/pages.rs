@@ -52,8 +52,7 @@ impl KnowledgeBase {
         match matches.len() {
             0 => {
                 let mut e = no_page_error(name_or_url);
-                e["hint"] =
-                    json!("Use omarchy_search_docs first, then pass result.title or .url");
+                e["hint"] = json!("Use omarchy_search_docs first, then pass result.title or .url");
                 e
             }
             1 => self.page_by_title(&matches.remove(0)),

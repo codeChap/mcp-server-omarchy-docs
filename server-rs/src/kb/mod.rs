@@ -30,8 +30,10 @@ pub(crate) const TIERS: &[(&str, &[&str])] = &[
 ];
 
 /// Reduced tier table for source_filter = "omarchy" (docs, then releases).
-pub(crate) const OMARCHY_TIERS: &[(&str, &[&str])] =
-    &[("core", &["manual", "repo-docs", "plugin-dev"]), ("releases", &["release"])];
+pub(crate) const OMARCHY_TIERS: &[(&str, &[&str])] = &[
+    ("core", &["manual", "repo-docs", "plugin-dev"]),
+    ("releases", &["release"]),
+];
 
 pub(crate) const PLUGIN_DEV_TIERS: &[(&str, &[&str])] = &[("core", &["plugin-dev"])];
 
@@ -126,10 +128,7 @@ pub(crate) fn query<T>(
 
 impl KnowledgeBase {
     pub(crate) fn open(db_path: &Path) -> rusqlite::Result<Self> {
-        let con = Connection::open_with_flags(
-            db_path,
-            rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
-        )?;
+        let con = Connection::open_with_flags(db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
         Ok(Self {
             con,
             synonyms: load_json(&db_path.with_file_name("synonyms.json")),
@@ -141,9 +140,9 @@ impl KnowledgeBase {
     pub(crate) fn meta_map(&self) -> HashMap<String, String> {
         let mut m = HashMap::new();
         if let Ok(mut stmt) = self.con.prepare("SELECT key, value FROM meta") {
-            if let Ok(rows) = stmt.query_map([], |r| {
-                Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
-            }) {
+            if let Ok(rows) =
+                stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))
+            {
                 for row in rows.flatten() {
                     m.insert(row.0, row.1);
                 }
@@ -153,9 +152,12 @@ impl KnowledgeBase {
     }
 
     pub(crate) fn counts(&self) -> Vec<(String, i64)> {
-        query(&self.con, "SELECT source, COUNT(*) FROM chunks GROUP BY source", &[], |r| {
-            Ok((r.get(0)?, r.get(1)?))
-        })
+        query(
+            &self.con,
+            "SELECT source, COUNT(*) FROM chunks GROUP BY source",
+            &[],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
     }
 
     pub(crate) fn total_chunks(&self) -> i64 {

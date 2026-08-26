@@ -41,7 +41,11 @@ impl Client {
             return None;
         }
         loop {
-            let line = self.reader.next().expect("server closed stdout").expect("read line");
+            let line = self
+                .reader
+                .next()
+                .expect("server closed stdout")
+                .expect("read line");
             let resp: Value = serde_json::from_str(&line).expect("valid json response");
             if resp.get("id") == payload.get("id") {
                 return Some(resp);
@@ -144,7 +148,11 @@ fn search_finds_theme_docs_in_manual_tier() {
     let results = r["results"].as_array().unwrap();
     assert!(
         results.iter().any(|x| x["source"] == "manual"
-            && x["title"].as_str().unwrap().to_lowercase().contains("theme")),
+            && x["title"]
+                .as_str()
+                .unwrap()
+                .to_lowercase()
+                .contains("theme")),
         "expected a manual theme hit, got: {results:?}"
     );
 }
@@ -159,7 +167,10 @@ fn plugin_dev_guide_is_searchable() {
     let results = r["results"].as_array().unwrap();
     assert!(
         results.iter().any(|x| x["source"] == "plugin-dev"
-            && x["url"].as_str().unwrap_or("").contains("omarchyplugins.com/develop")),
+            && x["url"]
+                .as_str()
+                .unwrap_or("")
+                .contains("omarchyplugins.com/develop")),
         "expected plugin-dev develop.html hit, got: {results:?}"
     );
 }
@@ -173,7 +184,11 @@ fn get_page_loads_plugin_develop_guide() {
     );
     assert_eq!(r["source"], "plugin-dev");
     let md = r["markdown"].as_str().unwrap_or("");
-    assert!(md.contains("BarWidget"), "missing BarWidget example: {}", &md[..md.len().min(200)]);
+    assert!(
+        md.contains("BarWidget"),
+        "missing BarWidget example: {}",
+        &md[..md.len().min(200)]
+    );
     assert!(
         md.contains("omarchy plugin clone") || md.contains("omarchy plugin validate"),
         "missing clone/validate commands"
@@ -200,10 +215,7 @@ fn manual_filter_ranks_themes_chapter() {
 #[test]
 fn zero_result_search_includes_did_you_mean_and_escalation() {
     let mut c = client();
-    let r = c.call_tool(
-        "omarchy_search_docs",
-        json!({"query": "zzzqqqxyzzy"}),
-    );
+    let r = c.call_tool("omarchy_search_docs", json!({"query": "zzzqqqxyzzy"}));
     assert_eq!(r["results"].as_array().unwrap().len(), 0);
     assert!(r.get("did_you_mean").is_some());
     assert!(r.get("escalation").is_some());
@@ -222,10 +234,12 @@ fn get_page_by_title_url_and_errors() {
     );
     assert!(r["title"].as_str().unwrap().contains("Dual Boot"));
 
-    let r = c.call_tool("omarchy_get_page", json!({"name_or_url": "zzz-no-such-page"}));
+    let r = c.call_tool(
+        "omarchy_get_page",
+        json!({"name_or_url": "zzz-no-such-page"}),
+    );
     assert_eq!(
-        r["error"],
-        "No page titled 'zzz-no-such-page'",
+        r["error"], "No page titled 'zzz-no-such-page'",
         "unexpected error payload: {r}"
     );
 }

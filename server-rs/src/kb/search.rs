@@ -21,7 +21,11 @@ fn run_match(kb: &KnowledgeBase, match_expr: &str, sources: &[&str], limit: usiz
         limit
     );
     let mut params = vec![rusqlite::types::Value::from(match_expr.to_string())];
-    params.extend(sources.iter().map(|s| rusqlite::types::Value::from(s.to_string())));
+    params.extend(
+        sources
+            .iter()
+            .map(|s| rusqlite::types::Value::from(s.to_string())),
+    );
     query(&kb.con, &sql, &params, Rec::from_row)
 }
 
@@ -69,10 +73,7 @@ fn collect_tiered(
 
 /// AND over all tokens first; fall back to OR (tokens + synonyms) when thin.
 /// The OR pass is deduplicated against the AND pass only afterwards.
-fn build_and_or_expressions(
-    kb: &KnowledgeBase,
-    tokens: &[String],
-) -> (String, String) {
+fn build_and_or_expressions(kb: &KnowledgeBase, tokens: &[String]) -> (String, String) {
     let synonyms = expand_synonyms(tokens, &kb.synonyms);
     let and_expr = tokens
         .iter()
@@ -81,11 +82,11 @@ fn build_and_or_expressions(
         .join(" AND ");
     let or_terms: Vec<&String> = tokens
         .iter()
-        .chain(
-            synonyms
+        .chain(synonyms.iter().filter(|s| {
+            !tokens
                 .iter()
-                .filter(|s| !tokens.iter().any(|b| s.starts_with(b.as_str()) || b.starts_with(s.as_str()))),
-        )
+                .any(|b| s.starts_with(b.as_str()) || b.starts_with(s.as_str()))
+        }))
         .collect();
     let or_expr = or_terms
         .iter()
@@ -175,4 +176,3 @@ fn filter_by_version(recs: Vec<Rec>, omarchy_version: Option<&str>) -> Vec<Rec> 
         })
         .collect()
 }
-

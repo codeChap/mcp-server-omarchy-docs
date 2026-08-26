@@ -9,8 +9,7 @@ use super::KnowledgeBase;
 use crate::util::cmp_versions;
 use crate::{SERVER_NAME, SERVER_VERSION};
 
-const RELEASES_API: &str =
-    "https://api.github.com/repos/basecamp/omarchy/releases?per_page=5";
+const RELEASES_API: &str = "https://api.github.com/repos/basecamp/omarchy/releases?per_page=5";
 
 impl KnowledgeBase {
     pub(crate) fn check_updates(&self) -> Value {
@@ -40,7 +39,12 @@ impl KnowledgeBase {
         }
     }
 
-    fn merge_upstream_status(&self, mut info: Value, releases: &Value, local_latest: &str) -> Value {
+    fn merge_upstream_status(
+        &self,
+        mut info: Value,
+        releases: &Value,
+        local_latest: &str,
+    ) -> Value {
         let upstream: Vec<String> = releases
             .as_array()
             .map(|arr| {
@@ -52,8 +56,7 @@ impl KnowledgeBase {
             })
             .unwrap_or_default();
         let newest = upstream.first().cloned();
-        let differs =
-            matches!(&newest, Some(n) if *n != local_latest) && !local_latest.is_empty();
+        let differs = matches!(&newest, Some(n) if *n != local_latest) && !local_latest.is_empty();
         if !differs {
             let obj = match info.as_object_mut() {
                 Some(o) => o,

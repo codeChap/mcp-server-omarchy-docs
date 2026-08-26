@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server-rs
+
+      - name: Check formatting
+        working-directory: server-rs
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        working-directory: server-rs
+        run: cargo clippy --all-targets
+
+      - name: Build release
+        working-directory: server-rs
+        run: cargo build --release
+
+      - name: Run tests
+        working-directory: server-rs
+        run: cargo test
+
+      - name: Upload release binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-binaries
+          path: |
+            server-rs/target/release/mcp-server-omarchy-docs
+            server-rs/target/release/build-kb
+          if-no-files-found: error

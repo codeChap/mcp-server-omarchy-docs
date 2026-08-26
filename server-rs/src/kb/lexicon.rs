@@ -5,15 +5,17 @@ use rusqlite::Connection;
 use serde_json::{Map, Value};
 
 const STOPWORDS: &[&str] = &[
-    "how", "do", "does", "i", "a", "an", "the", "to", "in", "on", "for", "of", "my",
-    "me", "is", "are", "it", "its", "what", "whats", "when", "where", "which", "can",
-    "with", "and", "or", "get", "got",
+    "how", "do", "does", "i", "a", "an", "the", "to", "in", "on", "for", "of", "my", "me", "is",
+    "are", "it", "its", "what", "whats", "when", "where", "which", "can", "with", "and", "or",
+    "get", "got",
 ];
 
 pub(crate) fn tokenize(query: &str) -> Vec<String> {
     query
         .to_lowercase()
-        .split(|c: char| !(c.is_alphanumeric() || c == '_' || c == '+' || c == '#' || c == '.' || c == '-'))
+        .split(|c: char| {
+            !(c.is_alphanumeric() || c == '_' || c == '+' || c == '#' || c == '.' || c == '-')
+        })
         .filter(|t| !t.is_empty() && !STOPWORDS.contains(t))
         .map(str::to_owned)
         .collect()
@@ -51,9 +53,9 @@ pub(crate) fn suggest_terms(con: &Connection, tokens: &[String]) -> Vec<String> 
         }
         let prefix_len = std::cmp::max(4, t.len().saturating_sub(2));
         let prefix: String = t.chars().take(prefix_len).collect();
-        let mut stmt = match con.prepare_cached(
-            "SELECT DISTINCT term FROM terms WHERE term LIKE ?1 || '%' LIMIT 3",
-        ) {
+        let mut stmt = match con
+            .prepare_cached("SELECT DISTINCT term FROM terms WHERE term LIKE ?1 || '%' LIMIT 3")
+        {
             Ok(s) => s,
             Err(_) => continue,
         };

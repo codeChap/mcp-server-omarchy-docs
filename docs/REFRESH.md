@@ -21,7 +21,7 @@ plus the refresh command.
 
 ## What "current" means
 
-- The KB pins to the newest release tag at fetch time (currently v4.0.0).
+- The KB pins to the newest release tag at fetch time (currently v4.0.3).
 - Manual content comes from the repo's `manual/*.md` — between releases this
   can drift ahead of omarchy.org, which is fine (it's the same source).
 - Commit tier tracks master, so post-release work is searchable immediately

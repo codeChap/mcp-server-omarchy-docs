@@ -25,8 +25,8 @@ cargo test                   # builder unit tests + end-to-end protocol tests
 ## Rebuild the knowledge base
 
 ```bash
-../scripts/fetch_sources.sh  # once: clone basecamp/omarchy + fetch releases
-./target/release/build-kb    # rebuild ../data/kb.sqlite3 (~6200 chunks, <1s)
+../scripts/fetch_sources.sh  # once: clone omacom/omarchy + fetch releases
+./target/release/build-kb    # rebuild ../data/kb.sqlite3 (~6500 chunks, <1s)
 ```
 
 Pass an optional root directory argument to build into a different checkout.

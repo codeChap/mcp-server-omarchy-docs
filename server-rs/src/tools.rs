@@ -42,7 +42,7 @@ pub(crate) fn tools_list() -> Vec<Value> {
         }),
         json!({
             "name": "omarchy_whats_new",
-            "description": "Release notes/changelog. No args = latest release (v4.0.0 Quattro). version='3.7.0' for a specific release; since='2026-01-01' for every release after a date.",
+            "description": "Release notes/changelog. No args = latest release (v4.0.3 Quattro). version='3.7.0' for a specific release; since='2026-01-01' for every release after a date.",
             "inputSchema": {
                 "type": "object",
                 "properties": {

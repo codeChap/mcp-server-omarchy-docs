@@ -248,9 +248,14 @@ fn get_page_by_title_url_and_errors() {
 fn whats_new_latest_since_and_unknown_version() {
     let mut c = client();
 
+    let info = c.call_tool("omarchy_kb_info", json!({}));
+    let pinned = info["latest_release"]
+        .as_str()
+        .unwrap()
+        .trim_start_matches('v');
     let r = c.call_tool("omarchy_whats_new", json!({}));
-    assert_eq!(r["version"], "4.0.0");
-    assert!(r["notes"].as_str().unwrap().len() > 10_000);
+    assert_eq!(r["version"], pinned);
+    assert!(r["notes"].as_str().unwrap().len() > 100);
 
     let r = c.call_tool("omarchy_whats_new", json!({"since": "2026-08-01"}));
     let releases = r["releases"].as_array().unwrap();

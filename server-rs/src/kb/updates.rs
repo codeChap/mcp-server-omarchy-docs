@@ -9,7 +9,7 @@ use super::KnowledgeBase;
 use crate::util::cmp_versions;
 use crate::{SERVER_NAME, SERVER_VERSION};
 
-const RELEASES_API: &str = "https://api.github.com/repos/basecamp/omarchy/releases?per_page=5";
+const RELEASES_API: &str = "https://api.github.com/repos/omacom/omarchy/releases?per_page=5";
 
 impl KnowledgeBase {
     pub(crate) fn check_updates(&self) -> Value {
@@ -26,7 +26,7 @@ impl KnowledgeBase {
             Err(e) => {
                 let mut o = json!({
                     "error": format!("Could not reach GitHub API: {e}"),
-                    "manual_check": "https://github.com/basecamp/omarchy/releases",
+                    "manual_check": "https://github.com/omacom/omarchy/releases",
                 });
                 if let Some(local) = o.as_object_mut() {
                     if let Value::Object(map) = info {
@@ -118,7 +118,7 @@ impl KnowledgeBase {
             "built_from_commit": m.get("built_from_commit").cloned().map(Value::String).unwrap_or(Value::Null),
             "built_at": m.get("built_at").cloned().unwrap_or_else(|| "unknown".into()),
             "snapshot_note": "Point-in-time snapshot. Run omarchy_check_updates (network) to compare against upstream, or just refresh: scripts/fetch_sources.sh && (cd server-rs && cargo build --release && ./target/release/build-kb)",
-            "corpus": "omarchy.org Quattro manual + basecamp/omarchy repo docs, omarchyplugins.com authoring guides, defaults, releases & git history",
+            "corpus": "omarchy.org Quattro manual + omacom/omarchy repo docs, omarchyplugins.com authoring guides, defaults, releases & git history",
         })
     }
 }

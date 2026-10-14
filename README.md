@@ -1,6 +1,6 @@
 # mcp-server-omarchy-docs
 
-Offline documentation MCP server for **Omarchy v4.0.0 "Quattro"**.
+Offline documentation MCP server for **Omarchy v4.0.3 "Quattro"**.
 100% Rust: one static binary (bundled SQLite with FTS5, JSON-RPC over stdio).
 No Docker, no ChromaDB, no embeddings, no network at query time — no Python.
 
@@ -8,7 +8,7 @@ Native alternative to [Zeus-Deus/omarchy-mcp](https://github.com/Zeus-Deus/omarc
 (Docker + ChromaDB + sentence-transformers): same corpus idea, none of the
 container machinery. Thanks to that project for the original blueprint.
 
-Indexed content comes from [basecamp/omarchy](https://github.com/basecamp/omarchy)
+Indexed content comes from [omacom/omarchy](https://github.com/omacom/omarchy)
 (MIT), omarchy.org, and the [Omarchy Plugins](https://omarchyplugins.com/develop.html)
 authoring guides — this server only indexes and serves it. Code is MIT
 licensed: see [LICENSE](LICENSE).
@@ -18,11 +18,11 @@ licensed: see [LICENSE](LICENSE).
 | Source | Chunks | What |
 |---|---:|---|
 | `manual` | ~186 | Official Quattro manual, linked to live omarchy.org URLs |
-| `repo-docs` | ~66 | Maintainer internals: theming engine, CLI router, update process |
-| `plugin-dev` | ~10 | [omarchyplugins.com](https://omarchyplugins.com/develop.html) authoring guides (clone, manifest, QML, publish) |
-| `config` | ~109 | Every shipped default config (hypr/*.lua, foot.ini, /etc overrides…) |
-| `release` | ~201 | All GitHub release notes through v4.0.0 |
-| `commit` | ~5600 | Full git history — design rationale lives in commit messages |
+| `repo-docs` | ~69 | Maintainer internals: theming engine, CLI router, update process |
+| `plugin-dev` | ~16 | [omarchyplugins.com](https://omarchyplugins.com/develop.html) authoring guides (clone, manifest, QML, publish) |
+| `config` | ~119 | Every shipped default config (hypr/*.lua, foot.ini, /etc overrides…) |
+| `release` | ~216 | All GitHub release notes through v4.0.3 |
+| `commit` | ~5878 | Full git history — design rationale lives in commit messages |
 
 Results are tiered so manual answers outrank configs, which outrank historical
 releases and commits, regardless of raw text score. Trust model:
@@ -31,9 +31,9 @@ releases and commits, regardless of raw text score. Trust model:
 ## Setup
 
 ```bash
-scripts/fetch_sources.sh                    # clone basecamp/omarchy + fetch release notes
+scripts/fetch_sources.sh                    # clone omacom/omarchy + fetch release notes
 cd server-rs && cargo build --release       # build both binaries (~5 MB, static SQLite)
-./target/release/build-kb                   # build ../data/kb.sqlite3 (~6200 chunks)
+./target/release/build-kb                   # build ../data/kb.sqlite3 (~6500 chunks)
 cargo test                                  # unit + end-to-end protocol tests
 ```
 

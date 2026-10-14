@@ -20,11 +20,11 @@ const ESCALATION_RETRY_HINTS: &[&str] = &[
 ];
 
 const ESCALATION_NEXT_STEPS: &str = "Thin results may mean the topic is undocumented. Escalate: \
-     (1) read the source at github.com/basecamp/omarchy — bin/ scripts and \
+     (1) read the source at github.com/omacom/omarchy — bin/ scripts and \
      git log are the real docs for internals; \
      (2) upstream docs — quickshell.org/docs (v4 shell), wiki.hypr.land \
      (window manager options), wiki.archlinux.org (everything below); \
-     (3) search closed issues at github.com/basecamp/omarchy/issues; \
+     (3) search closed issues at github.com/omacom/omarchy/issues; \
      (4) ask on the Omarchy Discord discord.gg/tXFUdasqhY with omarchy-debug output attached. \
      Never invent Omarchy-specific behavior from general Arch/Hyprland knowledge; \
      if unverified, say so.";

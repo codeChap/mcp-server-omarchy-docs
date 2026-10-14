@@ -1,7 +1,7 @@
 //! build-kb — Build the SQLite knowledge base from raw Omarchy sources.
 //!
 //! Rust port of the former `scripts/build_kb.py`. Corpus:
-//!   - manual:     manual/NN-*.md from the basecamp/omarchy repo (Quattro v4)
+//!   - manual:     manual/NN-*.md from the omacom/omarchy repo (Quattro v4)
 //!   - repo-docs:  repo-internal developer docs (docs/*.md)
 //!   - plugin-dev: omarchyplugins.com authoring guides (develop + publish)
 //!   - config:     shipped default configs (config/**, default/**, etc/**)
@@ -768,7 +768,7 @@ impl Ingested<'_> {
                     .into_owned(),
             };
             let rel = rel_to_repo(repo, &f);
-            let url = format!("https://github.com/basecamp/omarchy/tree/master/{rel}");
+            let url = format!("https://github.com/omacom/omarchy/tree/quattro/{rel}");
             for (sec_title, body) in split_sections(&text, &title) {
                 self.add(
                     "repo-docs",
@@ -894,7 +894,7 @@ impl Ingested<'_> {
                 "",
                 &content,
                 sha,
-                &format!("https://github.com/basecamp/omarchy/commit/{sha}"),
+                &format!("https://github.com/omacom/omarchy/commit/{sha}"),
                 None,
                 Some(date),
                 1,

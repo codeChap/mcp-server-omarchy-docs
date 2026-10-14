@@ -42,7 +42,7 @@ Curated starting points are attached to search results as `see_also`
 
 ## L3 — GitHub (minutes to read; days if posting)
 
-- Search **closed issues first**: https://github.com/basecamp/omarchy/issues
+- Search **closed issues first**: https://github.com/omacom/omarchy/issues
   (`is:issue is:closed <term>`) — most breakage is already solved there.
 - Recent commits/PRs for features newer than the KB snapshot (check freshness
   via `omarchy_kb_info`, refresh via scripts/fetch_sources.sh + build_kb.py).

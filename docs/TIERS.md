@@ -5,7 +5,7 @@ hit outranks a config hit regardless of raw text score.
 
 ## Tier 1 — `core` (manual, repo-docs, plugin-dev)
 
-Authoritative for **v4.0.0 behavior as shipped**. The manual is generated from
+Authoritative for **v4.0.3 behavior as shipped**. The manual is generated from
 the same markdown that renders omarchy.org/manual; repo-docs are the
 maintainers' internal design docs (theming engine, CLI router, update process).
 `plugin-dev` is the community marketplace authoring tutorial
